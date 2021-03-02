@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{% block title %}{{_('WPIA Site Monitor')}}{% endblock %}</title>
+<link rel="stylesheet" href="static/css/bootstrap.min.css">
+<script type="text/javascript" src="static/js/jquery-3.5.1.min.js"></script>
+<script type="text/javascript" src="static/js/bootstrap.min.js"></script>
+<style type="text/css">
+.form-inline .motion {
+  width: 100%;
+}
+.motion {
+  border: 1px solid black;
+  margin-top:5px;
+  margin-bottom:5px;
+}
+.motion .motion-title input.motion-title-input {
+  width: 66%;
+}
+.motion .motion-title .float {
+  float: right;
+}
+.motion .motion-title .motion-type {
+  margin: 5px;
+  float: right;
+}
+.motion textarea {
+  display: block;
+  min-width: 100%;
+}
+.motion .motion-title{
+  border-bottom: 1px solid black;
+  padding: 10px;
+}
+.motion .motion-title .title-text{
+  font-size: 15pt;
+  font-weight: bold;
+}
+.motion .anchor {
+  text-decoration-line: none;
+  color: inherit;
+  margin-right: 5px;
+}
+.motion .motion-title .date {
+  position: relative;
+  right: 0px;
+  margin-right: 5px;
+}
+.motion p {
+  padding: 10px;
+}
+td {
+  padding: 4px;
+}
+form {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+</style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="../">{{_('WPIA Website Monitor')}}</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+   <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="/">{{_('Home')}}</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {{_('Language')}}
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+         {%- for k, v in languages.items() %}
+           <a class="dropdown-item" href="/language/{{k}}">{{v}}</a>
+         {%- endfor %}
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>
+{%- block body %}
+{% endblock %}
+<!-- Footer -->
+  <footer class="page-footer">
+    <div class="footer-copyright text-center py-3">
+      <p>&copy; {{footer.version_year}} {{_('Copyright')}}: <a href="{{footer.copyright_link}}">{{footer.copyright_name}}</a> 
+      | <a href="{{footer.imprint_link}}">{{_('Imprint')}}</a> 
+      | <a href="{{footer.dataprotection_link}}">{{_('Data protection')}}</a></p>
+    </div>
+  </footer>
+</body>
+</html>

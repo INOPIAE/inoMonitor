@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container">
+  <table>
+  <tr>
+    <th>{{_('Website URL')}}</th>
+    <th>{{_('Current status')}}</th>
+    <th>{{_('Time stamp')}}</th>
+  </tr>
+  {%- for url in urls %}
+  <tr>
+    <td>{{url.url}}</td>
+    <td class="bg-{{ 'success' if url.current_status == 'good' else 'warning' }}">{{_(url.current_status)|capitalize}}</td>
+    <td>{{url.datestamp.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+  </tr>
+  {%- endfor %}
+  </table>
+</div>
+{%- endblock %}
