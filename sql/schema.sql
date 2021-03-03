@@ -12,7 +12,7 @@ CREATE TABLE testcase (testcase_id serial NOT NULL,
 
 DROP TABLE IF EXISTS testresult;
 DROP TYPE IF EXISTS "testresult_type";
-CREATE TYPE "testresult_type" AS ENUM ('good', 'false');
+CREATE TYPE "testresult_type" AS ENUM ('good', 'false', 'needs check');
 CREATE TABLE testresult (testresult_id serial NOT NULL,
                    website_id INTEGER NOT NULL,
                    testcase_id INTEGER NOT NULL,

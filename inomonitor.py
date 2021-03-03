@@ -72,7 +72,7 @@ def rel_redirect(loc):
     return r
 
 # Manually add vote options to the translation strings. They are used as keys in loops.
-TRANSLATION_STRINGS = {_('good'), _('false')}
+TRANSLATION_STRINGS = {_('good'), _('false'), _('needs check')}
 
 @app.context_processor
 def init_footer_variables():
@@ -117,7 +117,7 @@ init_db()
 def check_url(url, id):
     testcaseid = 1
     try:
-        response = requests.head(url, timeout=5, verify=os.path.join('certs', "ca-bundle.pem"))
+        response = requests.head(url, timeout=5, verify='false')
         status_code = response.status_code
         reason = response.reason
     except requests.exceptions.ConnectionError as e:
@@ -125,15 +125,18 @@ def check_url(url, id):
         reason = 'ConnectionError'
         print("Connection Error for " + url + ": " + e)
     good_results = [200, 403]
+    check_results = [400]
     result = "false"
     if int(status_code) in good_results :
         result = "good"
+    if int(status_code) in check_results :
+        result = "needs check"
     db = get_db()
     message = None
     with db.xact():
         rv = db.prepare("SELECT testresult FROM testresult WHERE website_id = $1 ORDER BY entered DESC LIMIT 2")(id)
         if len(rv) == 2:
-            if result == "false" and rv[0]["testresult"] == "false" and rv[1]["testresult"] == "good":
+            if result != "good" and rv[0]["testresult"] != "good" and rv[1]["testresult"] == "good":
                 message = "Problems with url '%s'" % url
         db.prepare("INSERT INTO testresult(\"website_id\", \"testcase_id\", \"testresult\", \"status_code\", \"response_message\") VALUES($1, $2, $3, $4, $5)")(id, testcaseid, result, int(status_code), reason)
     return message
