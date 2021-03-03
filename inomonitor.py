@@ -16,7 +16,6 @@ import click
 import re
 import os
 import requests
-from telnetlib import theNULL
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -158,3 +157,14 @@ def set_language(language):
 def check_job():
     check_urls()
 
+@app.cli.command("add_url")
+@click.argument("url")
+def add_url(url):
+    db = get_db()
+    with db.xact():
+        rv = db.prepare("SELECT url FROM website WHERE lower(url)=lower($1)")(url)
+        messagetext = _("URL '%s' already exists .") % (url)
+        if len(rv) == 0:
+            db.prepare("INSERT INTO website(\"url\") VALUES($1)")(url)
+            messagetext = _("URL '%s' inserted.") % (url)
+    click.echo(messagetext)
