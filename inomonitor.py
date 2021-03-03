@@ -16,6 +16,8 @@ import click
 import re
 import os
 import requests
+from smtplib import SMTP_SSL as SMTP
+from socket import gaierror
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -115,7 +117,7 @@ init_db()
 def check_url(url, id):
     testcaseid = 1
     try:
-        response = requests.head(url, timeout=5, verify=False)
+        response = requests.head(url, timeout=5, verify=os.path.join('certs', "ca-bundle.pem"))
         status_code = response.status_code
         reason = response.reason
     except requests.exceptions.ConnectionError as e:
@@ -127,21 +129,54 @@ def check_url(url, id):
     if int(status_code) in good_results :
         result = "good"
     db = get_db()
+    message = None
     with db.xact():
+        rv = db.prepare("SELECT testresult FROM testresult WHERE website_id = $1 ORDER BY entered DESC LIMIT 2")(id)
+        if len(rv) == 2:
+            if result == "false" and rv[0]["testresult"] == "false" and rv[1]["testresult"] == "good":
+                message = "Problems with url '%s'" % url
         db.prepare("INSERT INTO testresult(\"website_id\", \"testcase_id\", \"testresult\", \"status_code\", \"response_message\") VALUES($1, $2, $3, $4, $5)")(id, testcaseid, result, int(status_code), reason)
+    return message
 
 def check_urls():
     q = "SELECT website_id, url FROM website WHERE website.deleted IS NULL"
     websites = get_db().prepare(q)
+    message = None
     for website in websites:
-        check_url( "https://" + website["url"], website['website_id'])
+        m = check_url( "https://" + website["url"], website['website_id'])
+        if m is not None:
+            if message is None:
+                message = m + "\n\r"
+            else:
+                message += m + "\n\r"
+    if message is not None:
+        message = "Hi,\n\rthe WPIA Monitor reports the following problems:\n\r\n\r" + message
+        email_alert(message)
+
+def email_alert(message):
+    try:
+        #send your message with credentials specified above
+        with SMTP(app.config.get("SMTPHOST"), app.config.get("SMTPORT")) as server:
+            server.login(app.config.get("SMTPUSER"), app.config.get("SMTPPW"))
+            server.sendmail(app.config.get("SMTPUSER"), app.config.get("RECIEVER"), "Subject:WPIA Monitor Alert \r\n" + message)
+        # tell the script to report if your message was sent or which errors need to be fixed 
+        print('Alert sent')
+    except (gaierror, ConnectionRefusedError):
+        print('Failed to connect to the server. Bad connection settings?')
+        print("Server: " + smtp_server)
+        print("Port:" + port)
+    except smtplib.SMTPServerDisconnected:
+        print('Failed to connect to the server. Wrong user/password?')
+    except smtplib.SMTPException as e:
+        print('SMTP error occurred: ' + str(e))
+
 
 @app.route("/")
 def main():
     if app.debug:
         check_urls()
 
-    q = "SELECT distinct on (url) url, r.website_id, r.testresult as current_status, max(r.entered) as datestamp FROM website, testresult as r WHERE website.website_id = r.website_id AND website.deleted IS NULL GROUP BY url, r.testresult, r.website_id ORDER BY url"
+    q = "SELECT distinct on (url) url, r.website_id, r.testresult as current_status, max(r.entered) as datestamp FROM website, testresult as r WHERE website.website_id = r.website_id AND website.deleted IS NULL GROUP BY url, r.testresult, r.website_id ORDER BY url, datestamp DESC"
     urls = get_db().prepare(q)()
 
     return render_template('index.html', urls = urls,

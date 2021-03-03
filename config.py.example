@@ -14,3 +14,10 @@ LANGUAGES = {
     'de': 'Deutsch',
     'en': 'English'
 }
+
+# mail config
+SMTPHOST = "smtp.domain.tld"
+SMTPUSER = "ada@domain.tld"
+SMTPPW = "tbd"
+SMTPORT = "465"
+RECIEVER = "tbd"
