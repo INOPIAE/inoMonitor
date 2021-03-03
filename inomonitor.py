@@ -116,8 +116,9 @@ init_db()
 
 def check_url(url, id):
     testcaseid = 1
+    print(url)
     try:
-        response = requests.head(url, timeout=5, verify='false')
+        response = requests.head(url, timeout=5, verify=os.path.join('certs', 'ca-bundle.pem'))
         status_code = response.status_code
         reason = response.reason
     except requests.exceptions.ConnectionError as e:
