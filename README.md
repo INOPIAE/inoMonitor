@@ -68,10 +68,11 @@ flask check
 
 To add a user use this command
 ```
-flask add_url "url"
+flask add_url "url" "testcaseid"
 
 ```
 
 where:
 
 * url - url to website without protocol domain.tld NOT http(s)://domain.tld
+* testcaseid - 1 - https, 2 - http

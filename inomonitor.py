@@ -114,9 +114,10 @@ def init_db():
 
 init_db()
 
-def check_url(url, id):
-    testcaseid = 1
-    print(url)
+def check_url(url, id, testcaseid):
+    if app.debug:
+        print(url)
+
     try:
         response = requests.head(url, timeout=5, verify=os.path.join('certs', 'ca-bundle.pem'))
         status_code = response.status_code
@@ -143,11 +144,17 @@ def check_url(url, id):
     return message
 
 def check_urls():
-    q = "SELECT website_id, url FROM website WHERE website.deleted IS NULL"
-    websites = get_db().prepare(q)
+    db = get_db()
+    with db.xact():
+        q = "SELECT w.website_id, url, testcase_id FROM website as w, testcases WHERE w.deleted IS NULL AND testcases.website_id = w.website_id"
+        websites = db.prepare(q)()
     message = None
     for website in websites:
-        m = check_url( "https://" + website["url"], website['website_id'])
+        if website['testcase_id'] == 1 :
+            m = check_url( "https://" + website["url"], website['website_id'], website['testcase_id'])
+        else:
+            m = check_url( "http://" + website["url"], website['website_id'], website['testcase_id'])
+
         if m is not None:
             if message is None:
                 message = m + "\n\r"
@@ -174,7 +181,6 @@ def email_alert(message):
     except smtplib.SMTPException as e:
         print('SMTP error occurred: ' + str(e))
 
-
 @app.route("/")
 def main():
     if app.debug:
@@ -192,8 +198,8 @@ def url(id):
     url = get_db().prepare(q)(int(id))
     if len(url) == 0:
         return _('Error, url not found.'), 400
-    q = "SELECT r.testresult as current_status, r.entered, r.status_code, r. response_message"\
-        + " FROM testresult as r WHERE r.testresult <> 'good' "\
+    q = "SELECT r.testresult as current_status, r.entered, r.status_code, r. response_message, t.testcase"\
+        + " FROM testresult as r, testcase as t WHERE r.testresult <> 'good' AND t.testcase_id = r.testcase_id"\
         + " AND r.website_id = $1 ORDER BY r.entered DESC LIMIT 100 "
     results = get_db().prepare(q)(int(id))
 
@@ -213,12 +219,14 @@ def check_job():
 
 @app.cli.command("add_url")
 @click.argument("url")
-def add_url(url):
+@click.argument("testcaseid")
+def add_url(url, testcaseid):
     db = get_db()
     with db.xact():
         rv = db.prepare("SELECT url FROM website WHERE lower(url)=lower($1)")(url)
         messagetext = _("URL '%s' already exists .") % (url)
         if len(rv) == 0:
-            db.prepare("INSERT INTO website(\"url\") VALUES($1)")(url)
+            wid = db.prepare("INSERT INTO website(\"url\") VALUES($1) RETURNING website_id")(url)
+            db.prepare("INSERT INTO testcases(\"website_id\", testcase_id) VALUES($1, $2)")(wid[0]["website_id"], int(testcaseid))
             messagetext = _("URL '%s' inserted.") % (url)
     click.echo(messagetext)

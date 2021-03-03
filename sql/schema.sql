@@ -10,6 +10,14 @@ CREATE TABLE testcase (testcase_id serial NOT NULL,
                    testcase VARCHAR(200) NOT NULL,
                    PRIMARY KEY(testcase_id));
 
+DROP TABLE IF EXISTS testcases;
+CREATE TABLE testcases (testcases_id serial NOT NULL,
+                   testcase_id serial NOT NULL,
+                   website_id serial NOT NULL,
+                   entered timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   deleted timestamp NULL,
+                   PRIMARY KEY(testcases_id));
+
 DROP TABLE IF EXISTS testresult;
 DROP TYPE IF EXISTS "testresult_type";
 CREATE TYPE "testresult_type" AS ENUM ('good', 'false', 'needs check');
