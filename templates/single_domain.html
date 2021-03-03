@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container">
+    <h1>{{_('Information about not valid checks for domain "%(domain)s"', domain=url)}}</h1>
+{%- if resultcount == 0 %}
+<p>{{_('No entries found')}}</p>
+{%- else %}
+  <table>
+  <tr>
+    <th>{{_('Time stamp')}}</th>
+    <th>{{_('Current status')}}</th>
+    <th>{{_('Status code')}}</th>
+    <th>{{_('Status message')}}</th>
+  </tr>
+  {%- for url in results %}
+  <tr>
+    <td>{{url.entered.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+    <td class="bg-{{ 'success' if url.current_status == 'good' else 'warning' }}">{{_(url.current_status)|capitalize}}</td>
+    <td>{{url.status_code}}</td>
+    <td>{{url.response_message}}</td>
+  </tr>
+  {%- endfor %}
+  </table>
+{%- endif %}
+</div>
+{%- endblock %}

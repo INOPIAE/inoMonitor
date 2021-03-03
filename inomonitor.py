@@ -141,10 +141,25 @@ def main():
     if app.debug:
         check_urls()
 
-    q = "SELECT distinct on (url) url, r.testresult as current_status, max(r.entered) as datestamp FROM website, testresult as r WHERE website.website_id = r.website_id AND website.deleted IS NULL GROUP BY url, r.testresult ORDER BY url"
+    q = "SELECT distinct on (url) url, r.website_id, r.testresult as current_status, max(r.entered) as datestamp FROM website, testresult as r WHERE website.website_id = r.website_id AND website.deleted IS NULL GROUP BY url, r.testresult, r.website_id ORDER BY url"
     urls = get_db().prepare(q)()
 
     return render_template('index.html', urls = urls,
+                           languages=get_languages())
+
+@app.route("/url/<string:id>")
+def url(id):
+    q = "SELECT url FROM website WHERE website_id = $1"
+    url = get_db().prepare(q)(int(id))
+    if len(url) == 0:
+        return _('Error, url not found.'), 400
+    q = "SELECT r.testresult as current_status, r.entered, r.status_code, r. response_message"\
+        + " FROM testresult as r WHERE r.testresult <> 'good' "\
+        + " AND r.website_id = $1 ORDER BY r.entered DESC LIMIT 100 "
+    results = get_db().prepare(q)(int(id))
+
+
+    return render_template('single_domain.html', url = url[0][0], results = results, resultcount = len(results),
                            languages=get_languages())
 
 @app.route("/language/<string:language>")
