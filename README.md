@@ -66,9 +66,47 @@ flask check
 
 ## Add url via command line
 
-To add a user use this command
+To add an url use this command
 ```
 flask add_url "url" "testcaseid"
+
+```
+
+where:
+
+* url - url to website without protocol domain.tld NOT http(s)://domain.tld
+* testcaseid - 1 - https, 2 - http
+
+## Remove url via command line
+
+To remove an url use this command
+```
+flask remove_url "url"
+
+```
+
+where:
+
+* url - url to website without protocol domain.tld NOT http(s)://domain.tld
+
+## Update url via command line
+
+To update an url use this command
+```
+flask update_url "url_old" "url_new"
+
+```
+
+where:
+
+* url_old -  old url to website without protocol domain.tld NOT http(s)://domain.tld
+* url_new -  new url to website without protocol domain.tld NOT http(s)://domain.tld
+
+## Add test case via command line
+
+To update the a test case for an url use this command
+```
+flask update_testcase "url" "testcaseid"
 
 ```
 

@@ -146,7 +146,7 @@ def check_url(url, id, testcaseid):
 def check_urls():
     db = get_db()
     with db.xact():
-        q = "SELECT w.website_id, url, testcase_id FROM website as w, testcases WHERE w.deleted IS NULL AND testcases.website_id = w.website_id"
+        q = "SELECT w.website_id, url, t.testcase_id FROM website as w, testcases as t WHERE w.deleted IS NULL AND t.website_id = w.website_id AND t.deleted IS NULL"
         websites = db.prepare(q)()
     message = None
     for website in websites:
@@ -181,6 +181,15 @@ def email_alert(message):
     except smtplib.SMTPException as e:
         print('SMTP error occurred: ' + str(e))
 
+def adjust_url(url):
+    if re.search("://", url):
+        urlt = url.split("//")
+        url = urlt[1]
+    if url.endswith("/"):
+        url = url[:-1]
+    return url
+
+# web output
 @app.route("/")
 def main():
     if app.debug:
@@ -221,17 +230,69 @@ def check_job():
 @click.argument("url")
 @click.argument("testcaseid")
 def add_url(url, testcaseid):
-    if re.search("://", url):
-        urlt = url.split("//")
-        url = urlt[1]
-    if url.endswith("/"):
-        url = url[:-1]
+    url = adjust_url(url)
+    if testcaseid.isnumeric():
+        db = get_db()
+        with db.xact():
+            rv = db.prepare("SELECT url FROM website WHERE lower(url)=lower($1) and deleted IS NULL")(url)
+            messagetext = _("URL '%s' already exists.") % (url)
+            if len(rv) == 0:
+                wid = db.prepare("INSERT INTO website(\"url\") VALUES($1) RETURNING website_id")(url)
+                db.prepare("INSERT INTO testcases(\"website_id\", testcase_id) VALUES($1, $2)")(wid[0]["website_id"], int(testcaseid))
+                messagetext = _("URL '%s' inserted.") % (url)
+    else:
+        messagetext = _("Testcase is not numeric.")
+    click.echo(messagetext)
+
+@app.cli.command("remove_url")
+@click.argument("url")
+def remove_url(url):
+    url = adjust_url(url)
     db = get_db()
     with db.xact():
-        rv = db.prepare("SELECT url FROM website WHERE lower(url)=lower($1) and deleted IS NULL")(url)
-        messagetext = _("URL '%s' already exists .") % (url)
+        rv = db.prepare("SELECT website_id, website_id FROM website WHERE lower(url)=lower($1) and deleted IS NULL")(url)
         if len(rv) == 0:
-            wid = db.prepare("INSERT INTO website(\"url\") VALUES($1) RETURNING website_id")(url)
-            db.prepare("INSERT INTO testcases(\"website_id\", testcase_id) VALUES($1, $2)")(wid[0]["website_id"], int(testcaseid))
-            messagetext = _("URL '%s' inserted.") % (url)
+            messagetext = _("URL '%s' does not exists.") % (url)
+        else:
+            id = rv[0]["website_id"]
+            db.prepare("UPDATE website SET deleted = CURRENT_TIMESTAMP WHERE website_id = $1")(id)
+            db.prepare("UPDATE testcases SET deleted = CURRENT_TIMESTAMP WHERE website_id = $1")(id)
+            messagetext = _("URL '%s' deleted.") % (url)
+    click.echo(messagetext)
+
+@app.cli.command("update_url")
+@click.argument("url_old")
+@click.argument("url_new")
+def update_url(url_old, url_new):
+    url_old = adjust_url(url_old)
+    url_new = adjust_url(url_new)
+    db = get_db()
+    with db.xact():
+        rv = db.prepare("SELECT website_id, url FROM website WHERE lower(url)=lower($1) and deleted IS NULL")(url_old)
+        if len(rv) == 0:
+            messagetext = _("URL '%s' does not exists.") % (url_old)
+        else:
+            id = rv[0]["website_id"]
+            db.prepare("UPDATE website SET url = $1 WHERE website_id = $2")(url_new, id)
+            messagetext = _("URL '%s' updated to '%s'.") % (url_old, url_new)
+    click.echo(messagetext)
+
+@app.cli.command("update_testcase")
+@click.argument("url")
+@click.argument("testcaseid")
+def update_testcase(url, testcaseid):
+    url = adjust_url(url)
+    if testcaseid.isnumeric():
+        db = get_db()
+        with db.xact():
+            rv = db.prepare("SELECT website_id, url FROM website WHERE lower(url)=lower($1) and deleted IS NULL")(url)
+            if len(rv) == 0:
+                messagetext = _("URL '%s' does not exists.") % (url)
+            else:
+                id = rv[0]["website_id"]
+                db.prepare("UPDATE testcases SET deleted = CURRENT_TIMESTAMP WHERE website_id = $1")(id)
+                db.prepare("INSERT INTO testcases(\"website_id\", testcase_id) VALUES($1, $2)")(id, int(testcaseid))
+                messagetext = _("Testcase for '%s' updated to '%s'") % (url, testcaseid)
+    else:
+        messagetext = _("Testcase is not numeric.")
     click.echo(messagetext)

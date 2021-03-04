@@ -10,6 +10,9 @@ CREATE TABLE testcase (testcase_id serial NOT NULL,
                    testcase VARCHAR(200) NOT NULL,
                    PRIMARY KEY(testcase_id));
 
+INSERT INTO testcase (testcase) VALUES ('https');
+INSERT INTO testcase (testcase) VALUES ('http');
+
 DROP TABLE IF EXISTS testcases;
 CREATE TABLE testcases (testcases_id serial NOT NULL,
                    testcase_id serial NOT NULL,
