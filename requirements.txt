@@ -8,9 +8,10 @@ click>=7.1.2
 itsdangerous>=1.1.0
 
 Babel>=2.9.0
-Flask>=Babel-2.0.0
+Flask-Babel>=2.0.0
 
 Flask-Markdown>=0.3
 
 Flask-Language>=0.1.0
 
+requests>=2.25.1

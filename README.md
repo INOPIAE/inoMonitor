@@ -24,7 +24,7 @@ Configure a cron job that calls the user api function check_job e.g.every 10 min
 To debug-run linux:
 
 ```
-LANG=C.UTF-8 FLASK_DEBUG=1 FLASK_APP=motion.py flask run
+LANG=C.UTF-8 FLASK_DEBUG=1 FLASK_APP=inomotior.py flask run
 ```
 
 To debug-run windows:
