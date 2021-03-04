@@ -221,9 +221,14 @@ def check_job():
 @click.argument("url")
 @click.argument("testcaseid")
 def add_url(url, testcaseid):
+    if re.search("://", url):
+        urlt = url.split("//")
+        url = urlt[1]
+    if url.endswith("/"):
+        url = url[:-1]
     db = get_db()
     with db.xact():
-        rv = db.prepare("SELECT url FROM website WHERE lower(url)=lower($1)")(url)
+        rv = db.prepare("SELECT url FROM website WHERE lower(url)=lower($1) and deleted IS NULL")(url)
         messagetext = _("URL '%s' already exists .") % (url)
         if len(rv) == 0:
             wid = db.prepare("INSERT INTO website(\"url\") VALUES($1) RETURNING website_id")(url)

@@ -31,7 +31,7 @@ To debug-run windows:
 ```
 set LANG=C.UTF-8
 set FLASK_DEBUG=1
-set FLASK_APP=motion.py
+set FLASK_APP=inomonitor.py
 flask run
 ```
 
