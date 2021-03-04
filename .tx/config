@@ -1,0 +1,10 @@
+[main]
+host = https://www.transifex.com
+
+[inomonitor.messages-pot]
+file_filter = translations/<lang>/LC_MESSAGES/messages.po
+minimum_perc = 0
+source_file = translations/messages.pot
+source_lang = en
+type = PO
+
