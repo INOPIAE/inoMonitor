@@ -126,7 +126,7 @@ def check_url(url, id, testcaseid):
         status_code = '000'
         reason = 'ConnectionError'
         print("Connection Error for " + url + ": " + e)
-    good_results = [200, 403]
+    good_results = [200, 401, 403]
     check_results = [400]
     result = "false"
     if int(status_code) in good_results :
